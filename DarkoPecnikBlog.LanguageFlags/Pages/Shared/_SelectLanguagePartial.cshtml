@@ -1,0 +1,40 @@
+﻿@using Microsoft.AspNetCore.Builder
+@using Microsoft.AspNetCore.Http.Features
+@using Microsoft.AspNetCore.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Microsoft.Extensions.Options
+@using System.Globalization
+
+@inject IViewLocalizer Localizer
+@inject IOptions<RequestLocalizationOptions> localizationOptions
+
+@{
+    #nullable disable
+    var currentCulture = Context.Features.Get<IRequestCultureFeature>().RequestCulture.UICulture;
+    var currentRegion = new RegionInfo(currentCulture.LCID);
+    var cultureItems = localizationOptions.Value.SupportedUICultures
+        .Select(c => new { Value = c.Name, Text = c.Parent.NativeName, TwoLetterISORegionName = new RegionInfo(c.LCID).TwoLetterISORegionName })
+        .ToList();
+    var returnUrl = string.IsNullOrEmpty(Context.Request.Path) ? "~/" : $"~{Context.Request.Path.Value}";
+}
+
+<div>
+    <form id="selectLanguage" method="post" class="form-horizontal">
+        <div class="dropdown">
+            <a class="btn btn-white border-secondary dropdown-toggle" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <span class="flag-icon flag-icon-background flag-icon-@currentRegion.TwoLetterISORegionName.ToLower()"></span>
+                @currentCulture.Parent.NativeName
+            </a>
+            <ul class="dropdown-menu">
+                @foreach (var item in cultureItems)
+                {
+                    <li>
+                        <button asp-page="Index" asp-page-handler="SetLanguage" asp-route-returnUrl="@returnUrl" asp-route-culture="@item.Value" type="submit" class="dropdown-item">
+                            <span class="flag-icon flag-icon-background flag-icon-@item.TwoLetterISORegionName.ToLower()"></span> @item.Text
+                        </button>
+                    </li>
+                }
+            </ul>
+        </div>
+    </form>
+</div>
